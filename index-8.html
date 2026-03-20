@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <title>Meetha Pipe — XAUUSD &amp; BTC Signal System</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;700;800&family=IBM+Plex+Mono:wght@400;700&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="style.css"/>
+</head>
+<body>
+
+<!-- ══ HEADER ══ -->
+<header class="hdr">
+  <div class="hbrand">
+    <div class="hlogo">MP</div>
+    <div class="htitle">
+      <h1>MEETHA PIPE</h1>
+      <p>SUPER STRATEGY &middot; MULTI ASSET</p>
+    </div>
+  </div>
+  <div class="hright">
+    <div class="lchip"><span class="pdot"></span>LIVE</div>
+    <div id="clk">--:--:-- UTC</div>
+  </div>
+</header>
+
+<!-- ══ TOOLBAR ══ -->
+<div class="tbar">
+  <span class="tflbl">TIMEFRAME</span>
+  <button class="tfbtn on" id="btn15" onclick="setTF('15m')">15M</button>
+  <button class="tfbtn"    id="btn5"  onclick="setTF('5m')">5M</button>
+
+  <div class="pair-tabs">
+    <button class="pbtn on" id="pbtnXAU" onclick="setPair('XAU')">XAU/USD</button>
+    <button class="pbtn"    id="pbtnBTC" onclick="setPair('BTC')">BTC/USD</button>
+  </div>
+
+  <div class="live-prices">
+    <div class="lp-item">
+      <span class="lp-lbl">GOLD</span>
+      <span class="lp-val" id="xauPrice">--</span>
+    </div>
+    <div class="lp-sep"></div>
+    <div class="lp-item">
+      <span class="lp-lbl">BTC</span>
+      <span class="lp-val" id="btcPrice">--</span>
+    </div>
+  </div>
+
+  <button class="rfbtn" onclick="doRefresh()">&#8635; REFRESH</button>
+</div>
+
+<!-- ══ MAIN LAYOUT ══ -->
+<div class="wrap">
+
+  <!-- LEFT: Chart + MTF + Log -->
+  <div class="lcol">
+
+    <!-- Chart -->
+    <div class="chartbox">
+      <canvas id="cvChart"></canvas>
+      <div class="ctag" id="chartag">XAUUSD &middot; 15M</div>
+      <div class="chart-legend">
+        <span class="leg-i"><span class="leg-dot gn"></span>EMA10</span>
+        <span class="leg-i"><span class="leg-dot rd"></span>EMA21</span>
+        <span class="leg-i"><span class="leg-line bl"></span>BB</span>
+      </div>
+    </div>
+
+    <!-- BB Values -->
+    <div class="bbstrip">
+      <div class="bbc"><div class="bbcl">BB UPPER</div><div class="bbcv" id="vBBu">--</div></div>
+      <div class="bbc"><div class="bbcl">BB MIDDLE</div><div class="bbcv" id="vBBm">--</div></div>
+      <div class="bbc"><div class="bbcl">BB LOWER</div><div class="bbcv" id="vBBl">--</div></div>
+      <div class="bbc"><div class="bbcl">PRICE</div><div class="bbcv" id="vPRC">--</div></div>
+    </div>
+
+    <!-- Multi-Timeframe Panel -->
+    <div class="mtf-panel">
+      <div class="mtf-hdr">MULTI-TIMEFRAME ANALYSIS</div>
+      <div class="mtfrow">
+        <div class="mtfc">
+          <div class="mtfl">15M SIGNAL</div>
+          <div class="mtfv wait" id="v15sig">WAIT</div>
+          <div class="mtfs" id="v15sub">Calculating...</div>
+          <div class="mtf-badge" id="v15score">0 / 3</div>
+        </div>
+        <div class="mtf-div"></div>
+        <div class="mtfc">
+          <div class="mtfl">5M SIGNAL</div>
+          <div class="mtfv wait" id="v5sig">WAIT</div>
+          <div class="mtfs" id="v5sub">Calculating...</div>
+          <div class="mtf-badge" id="v5score">0 / 3</div>
+        </div>
+        <div class="mtf-div"></div>
+        <div class="mtfc mtfc-consensus">
+          <div class="mtfl">CONSENSUS</div>
+          <div class="mtfv wait" id="consensusSig">WAIT</div>
+          <div class="mtfs" id="consensusSub">Awaiting both TFs</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Signal History -->
+    <div class="rsec">
+      <div class="shdr">
+        <span class="slbl">SIGNAL HISTORY</span>
+        <span class="stag" id="logcnt">0 signals</span>
+      </div>
+      <div class="logscroll">
+        <table class="logtbl">
+          <thead>
+            <tr>
+              <th>TIME</th><th>PAIR</th><th>TF</th>
+              <th>SIGNAL</th><th>STR</th>
+              <th>ENTRY</th><th>SL</th><th>TP</th>
+            </tr>
+          </thead>
+          <tbody id="logbody">
+            <tr><td colspan="8" class="lempty">Monitoring for signals...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </div><!-- /lcol -->
+
+  <!-- RIGHT: Signal Panels -->
+  <div class="rcol">
+
+    <!-- ── MAIN SIGNAL BOX ── -->
+    <div class="sigbox wait" id="sigbox">
+      <div class="sig-pair-tag" id="sigPairTag">XAUUSD</div>
+      <div class="sigeye">CURRENT SIGNAL</div>
+      <span class="sigico" id="sigico">&#9888;&#65039;</span>
+      <div class="sigwrd" id="sigwrd">WAIT</div>
+      <div class="sigstr sN" id="sigstr">CALCULATING...</div>
+
+      <!-- Trade Details -->
+      <div class="trow">
+        <div class="tcard">
+          <div class="tcl">ENTRY</div>
+          <div class="tcv entry-v" id="tdE">--</div>
+        </div>
+        <div class="tcard">
+          <div class="tcl">STOP LOSS</div>
+          <div class="tcv sl-v" id="tdS">--</div>
+        </div>
+        <div class="tcard">
+          <div class="tcl">TAKE PROFIT</div>
+          <div class="tcv tp-v" id="tdT">--</div>
+        </div>
+      </div>
+
+      <div class="rr-row">
+        <span class="rr-lbl">R:R RATIO</span>
+        <span class="rr-val">1 : 2</span>
+        <span class="rr-sep"></span>
+        <span class="rr-lbl">RISK</span>
+        <span class="rr-val">1–2%</span>
+      </div>
+    </div>
+
+    <!-- ── BTC MINI SIGNAL ── -->
+    <div class="mini-sig-box" id="btcMiniBox">
+      <div class="mini-sig-hdr">
+        <span class="mini-sig-pair">BTC / USD</span>
+        <span class="mini-sig-tf" id="btcMiniTF">15M</span>
+      </div>
+      <div class="mini-sig-body">
+        <div class="mini-sig-main wait" id="btcMiniSig">WAIT</div>
+        <div class="mini-sig-details">
+          <div class="mini-detail">
+            <span class="md-lbl">PRICE</span>
+            <span class="md-val" id="btcMiniPrice">--</span>
+          </div>
+          <div class="mini-detail">
+            <span class="md-lbl">RSI</span>
+            <span class="md-val" id="btcMiniRSI">--</span>
+          </div>
+          <div class="mini-detail">
+            <span class="md-lbl">ENTRY</span>
+            <span class="md-val entry-v" id="btcMiniEntry">--</span>
+          </div>
+          <div class="mini-detail">
+            <span class="md-lbl">SL</span>
+            <span class="md-val sl-v" id="btcMiniSL">--</span>
+          </div>
+          <div class="mini-detail">
+            <span class="md-lbl">TP</span>
+            <span class="md-val tp-v" id="btcMiniTP">--</span>
+          </div>
+          <div class="mini-detail">
+            <span class="md-lbl">STRENGTH</span>
+            <span class="md-val" id="btcMiniStr">--</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── XAU MINI (shown when BTC tab active) ── -->
+    <div class="mini-sig-box" id="xauMiniBox" style="display:none">
+      <div class="mini-sig-hdr">
+        <span class="mini-sig-pair">XAU / USD</span>
+        <span class="mini-sig-tf" id="xauMiniTF">15M</span>
+      </div>
+      <div class="mini-sig-body">
+        <div class="mini-sig-main wait" id="xauMiniSig">WAIT</div>
+        <div class="mini-sig-details">
+          <div class="mini-detail">
+            <span class="md-lbl">PRICE</span>
+            <span class="md-val" id="xauMiniPrice">--</span>
+          </div>
+          <div class="mini-detail">
+            <span class="md-lbl">RSI</span>
+            <span class="md-val" id="xauMiniRSI">--</span>
+          </div>
+          <div class="mini-detail">
+            <span class="md-lbl">ENTRY</span>
+            <span class="md-val entry-v" id="xauMiniEntry">--</span>
+          </div>
+          <div class="mini-detail">
+            <span class="md-lbl">SL</span>
+            <span class="md-val sl-v" id="xauMiniSL">--</span>
+          </div>
+          <div class="mini-detail">
+            <span class="md-lbl">TP</span>
+            <span class="md-val tp-v" id="xauMiniTP">--</span>
+          </div>
+          <div class="mini-detail">
+            <span class="md-lbl">STRENGTH</span>
+            <span class="md-val" id="xauMiniStr">--</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── CONDITION CHECK ── -->
+    <div class="rsec">
+      <div class="shdr">
+        <span class="slbl">CONDITION CHECK</span>
+        <span class="stag" id="condtag">15M</span>
+      </div>
+      <div class="chklist">
+        <div class="crow" id="ck1">
+          <div class="cic" id="ci1">?</div>
+          <span class="ctxt">EMA 10 vs EMA 21</span>
+          <span class="cres" id="cr1">--</span>
+        </div>
+        <div class="crow" id="ck2">
+          <div class="cic" id="ci2">?</div>
+          <span class="ctxt">RSI Level &amp; Filter</span>
+          <span class="cres" id="cr2">--</span>
+        </div>
+        <div class="crow" id="ck3">
+          <div class="cic" id="ci3">?</div>
+          <span class="ctxt">Price vs Bollinger Band</span>
+          <span class="cres" id="cr3">--</span>
+        </div>
+      </div>
+      <div class="scorezone">
+        <div class="scorelbl">SIGNAL STRENGTH</div>
+        <div class="scoretrk"><div class="scorefil" id="sfil" style="width:0%"></div></div>
+        <div class="scoretck"><span>0</span><span>1/3</span><span>2/3</span><span>3/3</span></div>
+        <div class="scoretxt" id="stxt">Score: 0 / 3</div>
+      </div>
+    </div>
+
+    <!-- ── LIVE INDICATORS ── -->
+    <div class="rsec">
+      <div class="shdr">
+        <span class="slbl">LIVE INDICATORS</span>
+        <span class="stag" id="indtag">15M</span>
+      </div>
+      <div class="indlist">
+
+        <div class="icard" id="icEMA">
+          <div class="idot"></div>
+          <div class="ibody">
+            <div class="iname">EMA 10 &amp; EMA 21</div>
+            <div class="ivalrow">
+              <span class="ival ema10c" id="vE10">--</span>
+              <span class="inote">EMA10</span>
+              <span class="ival ema21c" id="vE21">--</span>
+              <span class="inote">EMA21</span>
+            </div>
+            <div class="idiff" id="emaDiff">--</div>
+          </div>
+          <div class="itag tgD" id="tEMA">--</div>
+        </div>
+
+        <div class="icard" id="icRSI">
+          <div class="idot"></div>
+          <div class="ibody">
+            <div class="iname">RSI (14) — Dead Zone: 45–55</div>
+            <div class="ivalrow">
+              <span class="ival" id="vRSI">--</span>
+              <span class="inote" id="vRSIn">--</span>
+            </div>
+            <div class="rsi-wrap">
+              <div class="rsitrk">
+                <div class="rsifil" id="rfil" style="width:50%"></div>
+              </div>
+              <div class="rsimrk">
+                <span>0</span><span>30</span><span>45</span>
+                <span>55</span><span>70</span><span>100</span>
+              </div>
+            </div>
+          </div>
+          <div class="itag tgD" id="tRSI">--</div>
+        </div>
+
+        <div class="icard" id="icBB">
+          <div class="idot"></div>
+          <div class="ibody">
+            <div class="iname">Bollinger Bands (20, 2)</div>
+            <div class="ivalrow">
+              <span class="ival" id="vBBP">--</span>
+              <span class="inote">% in band (0=lower, 100=upper)</span>
+            </div>
+          </div>
+          <div class="itag tgD" id="tBB">--</div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ── RISK MANAGEMENT ── -->
+    <div class="rsec">
+      <div class="shdr"><span class="slbl">RISK MANAGEMENT</span></div>
+      <div class="riskwrap">
+        <div class="riskrow"><span class="rk">Suggested Risk / Trade</span><span class="rv">1% – 2%</span></div>
+        <div class="riskrow"><span class="rk">Risk : Reward Ratio</span><span class="rv">1 : 2 minimum</span></div>
+        <div class="riskrow"><span class="rk">SL Distance</span><span class="rv" id="slDst">--</span></div>
+        <div class="riskrow"><span class="rk">TP Distance</span><span class="rv" id="tpDst">--</span></div>
+        <div class="riskrow"><span class="rk">Position Sizing</span><span class="rv">Risk $ ÷ SL pts</span></div>
+        <div class="disc">
+          &#9888; TRADING INVOLVES SIGNIFICANT RISK OF LOSS.<br/>
+          This tool is for educational purposes only.<br/>
+          Always use proper risk management.
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /rcol -->
+</div><!-- /wrap -->
+
+<!-- STATUS BAR -->
+<div class="sbar">
+  <span id="statmsg"><span class="gok">&#9679;</span> System Active</span>
+  <span id="lastupd">Initializing...</span>
+  <span>Meetha Pipe &middot; XAUUSD &amp; BTC Super Strategy</span>
+</div>
+
+<script src="script.js"></script>
+</body>
+</html>
