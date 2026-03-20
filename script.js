@@ -1,97 +1,121 @@
-const chart = LightweightCharts.createChart(document.getElementById('chart-container'), {
-    width: document.getElementById('chart-container').clientWidth,
-    height:400,
-    layout:{backgroundColor:'#111', textColor:'#eee'},
-    grid:{vertLines:{color:'#333'}, horzLines:{color:'#333'}}
+/** * ALPHASIGNAL ENGINE
+ * Logic: EMA Cross + RSI Extremes + Bollinger Band Squeeze
+ */
+
+const AUDIO_CTX = new (window.AudioContext || window.webkitAudioContext)();
+
+// --- Technical Indicators ---
+const Indicators = {
+    ema: (data, period) => {
+        const k = 2 / (period + 1);
+        let emaVal = data[0];
+        for (let i = 1; i < data.length; i++) {
+            emaVal = (data[i] * k) + (emaVal * (1 - k));
+        }
+        return emaVal;
+    },
+    rsi: (data, period = 14) => {
+        let gains = 0, losses = 0;
+        for (let i = data.length - period; i < data.length; i++) {
+            let diff = data[i] - data[i - 1];
+            diff >= 0 ? gains += diff : losses -= diff;
+        }
+        let rs = (gains / period) / (losses / period);
+        return 100 - (100 / (1 + rs));
+    },
+    bollinger: (data, period = 20) => {
+        const slice = data.slice(-period);
+        const mean = slice.reduce((a, b) => a + b) / period;
+        const stdDev = Math.sqrt(slice.map(x => Math.pow(x - mean, 2)).reduce((a, b) => a + b) / period);
+        return { upper: mean + (stdDev * 2), lower: mean - (stdDev * 2), mid: mean };
+    }
+};
+
+// --- Sound Alerts ---
+function playAlert(type) {
+    const osc = AUDIO_CTX.createOscillator();
+    const gain = AUDIO_CTX.createGain();
+    osc.connect(gain);
+    gain.connect(AUDIO_CTX.destination);
+    
+    const now = AUDIO_CTX.currentTime;
+    if (type === 'BUY') {
+        osc.frequency.setValueAtTime(440, now);
+        osc.frequency.exponentialRampToValueAtTime(880, now + 0.5);
+    } else {
+        osc.frequency.setValueAtTime(440, now);
+        osc.frequency.exponentialRampToValueAtTime(220, now + 0.5);
+    }
+    
+    gain.gain.setValueAtTime(0.1, now);
+    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.5);
+    osc.start();
+    osc.stop(now + 0.5);
+}
+
+// --- Signal Core ---
+async function fetchAndCalculate(symbol, interval) {
+    try {
+        const response = await fetch(`https://api.binance.com/api/v3/klines?symbol=${symbol}&interval=${interval}&limit=100`);
+        const candles = await response.json();
+        const closes = candles.map(c => parseFloat(c[4]));
+        const highs = candles.map(c => parseFloat(c[2]));
+        const lows = candles.map(c => parseFloat(c[3]));
+
+        const lastClose = closes[closes.length - 1];
+        const ema10 = Indicators.ema(closes, 10);
+        const ema21 = Indicators.ema(closes, 21);
+        const rsi = Indicators.rsi(closes, 14);
+        const bb = Indicators.bollinger(closes, 20);
+
+        let signal = "WAIT";
+        if (ema10 > ema21 && rsi < 50 && lastClose <= bb.lower * 1.01) signal = "BUY";
+        if (ema10 < ema21 && rsi > 50 && lastClose >= bb.upper * 0.99) signal = "SELL";
+        if (rsi > 45 && rsi < 55) signal = "WAIT";
+
+        // Simple SL/TP Logic
+        const recentLow = Math.min(...lows.slice(-6));
+        const recentHigh = Math.max(...highs.slice(-6));
+        let sl = signal === "BUY" ? recentLow : recentHigh;
+        let tp = signal === "BUY" ? lastClose + (lastClose - sl) * 2 : lastClose - (sl - lastClose) * 2;
+
+        return { signal, entry: lastClose, sl, tp };
+    } catch (e) {
+        console.error("Fetch error:", e);
+        return null;
+    }
+}
+
+// --- UI Update Loop ---
+async function updateDashboard() {
+    const btc15 = await fetchAndCalculate('BTCUSDT', '15m');
+    const btc5 = await fetchAndCalculate('BTCUSDT', '5m');
+
+    if (btc15 && btc5) {
+        document.getElementById('btc-15m').innerText = btc15.signal;
+        document.getElementById('btc-5m').innerText = btc5.signal;
+        
+        const consensus = (btc15.signal === btc5.signal) ? btc15.signal : "WAIT";
+        const badge = document.getElementById('btc-consensus');
+        badge.innerText = consensus;
+        badge.className = `badge ${consensus}`;
+        
+        document.getElementById('btc-entry').innerText = btc15.entry.toFixed(2);
+        document.getElementById('btc-sl').innerText = btc15.sl.toFixed(2);
+        document.getElementById('btc-tp').innerText = btc15.tp.toFixed(2);
+
+        if (consensus !== "WAIT") playAlert(consensus);
+    }
+}
+
+// Initial Boot
+setInterval(updateDashboard, 30000); // 30s refresh
+updateDashboard();
+
+// BTC Chart Init (Simplified)
+const chart = LightweightCharts.createChart(document.getElementById('btc-chart'), {
+    layout: { backgroundColor: '#000', textColor: '#ddd' },
+    grid: { vertLines: { color: '#222' }, horzLines: { color: '#222' } }
 });
 const candleSeries = chart.addCandlestickSeries();
-const ema10Series = chart.addLineSeries({color:'green', lineWidth:2});
-const ema21Series = chart.addLineSeries({color:'red', lineWidth:2});
-
-let timeframe = '15'; // default 15M
-
-document.querySelectorAll('.timeframe-buttons button').forEach(btn=>{
-    btn.addEventListener('click',()=>{
-        document.querySelectorAll('.timeframe-buttons button').forEach(b=>b.classList.remove('active'));
-        btn.classList.add('active');
-        timeframe = btn.dataset.timeframe;
-        updateChart();
-    });
-});
-
-// Fetch Binance API candles
-async function fetchCandles(symbol, interval='15m', limit=50){
-    const url = `https://api.binance.com/api/v3/klines?symbol=${symbol}&interval=${interval}&limit=${limit}`;
-    const res = await fetch(url);
-    const data = await res.json();
-    return data.map(c=>({
-        time: c[0]/1000,
-        open: parseFloat(c[1]),
-        high: parseFloat(c[2]),
-        low: parseFloat(c[3]),
-        close: parseFloat(c[4])
-    }));
-}
-
-// EMA Calculation
-function calculateEMA(candles, period){
-    const k = 2/(period+1);
-    const ema = [];
-    ema[0] = candles[0].close;
-    for(let i=1;i<candles.length;i++){
-        ema[i] = candles[i].close*k + ema[i-1]*(1-k);
-    }
-    return ema;
-}
-
-// Signal calculation & panel update
-function updateSignals(candles){
-    const ema10 = calculateEMA(candles,10);
-    const ema21 = calculateEMA(candles,21);
-    const lastPrice = candles[candles.length-1].close;
-
-    let signal='wait';
-    if(ema10[ema10.length-1]>ema21[ema21.length-1]) signal='buy';
-    else if(ema10[ema10.length-1]<ema21[ema21.length-1]) signal='sell';
-
-    // Multi-timeframe mock same signal for demo
-    document.getElementById('btc-15m-signal').textContent=signal.toUpperCase();
-    document.getElementById('btc-15m-signal').className=signal;
-    document.getElementById('btc-5m-signal').textContent=signal.toUpperCase();
-    document.getElementById('btc-5m-signal').className=signal;
-    document.getElementById('btc-consensus').textContent=signal.toUpperCase();
-    document.getElementById('btc-consensus').className=signal;
-
-    document.getElementById('btc-entry').textContent=lastPrice.toFixed(2);
-    const sl = Math.min(...candles.slice(-6).map(c=>c.low));
-    const tp = lastPrice + (lastPrice-sl)*2;
-    document.getElementById('btc-sl').textContent=sl.toFixed(2);
-    document.getElementById('btc-tp').textContent=tp.toFixed(2);
-
-    playSignalSound(signal);
-}
-
-// Sound alerts
-function playSignalSound(signal){
-    if(signal==='wait') return;
-    const ctx = new (window.AudioContext||window.webkitAudioContext)();
-    const osc = ctx.createOscillator();
-    osc.type='sine';
-    osc.frequency.setValueAtTime(signal==='buy'?880:220, ctx.currentTime);
-    osc.connect(ctx.destination);
-    osc.start();
-    osc.stop(ctx.currentTime+0.2);
-}
-
-// Main chart + signals update
-async function updateChart(){
-    const candles = await fetchCandles('BTCUSDT', timeframe+'m', 50);
-    candleSeries.setData(candles);
-    ema10Series.setData(calculateEMA(candles,10).map((v,i)=>({time:candles[i].time,value:v})));
-    ema21Series.setData(calculateEMA(candles,21).map((v,i)=>({time:candles[i].time,value:v})));
-    updateSignals(candles);
-}
-
-// Initial load + interval
-updateChart();
-setInterval(updateChart, 30000);
+// Note: To populate this chart with data, you'd map the Binance klines to {time, open, high, low, close}
