@@ -1,61 +1,50 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Meetha Pipe V3 Signals</title>
-  <link rel="stylesheet" href="style.css" />
-  <script src="https://unpkg.com/lightweight-charts/dist/lightweight-charts.standalone.production.js"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Meetha Pipe V3 - Trading Signals</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://unpkg.com/lightweight-charts/dist/lightweight-charts.standalone.production.js"></script>
 </head>
 <body>
-  <header>
-    <h1>Meetha Pipe V3 - XAUUSD & BTC/USD Signals</h1>
-    <div class="timeframes">
-      <button id="btn15m" class="active">15M</button>
-      <button id="btn5m">5M</button>
-    </div>
-  </header>
-
-  <main>
-    <section class="panels">
-      <div class="panel" id="xauusd-panel">
-        <h2>XAUUSD</h2>
-        <div class="signal-info">
-          <p>Current Signal: <span id="xau-signal">--</span></p>
-          <p>Strength: <span id="xau-strength">--</span></p>
-          <p>Entry: <span id="xau-entry">--</span></p>
-          <p>SL: <span id="xau-sl">--</span></p>
-          <p>TP: <span id="xau-tp">--</span></p>
+    <header>
+        <h1>Meetha Pipe V3</h1>
+        <div class="timeframe-buttons">
+            <button data-timeframe="15">15M</button>
+            <button data-timeframe="5">5M</button>
         </div>
-      </div>
-      <div class="panel" id="btc-panel">
-        <h2>BTC/USD</h2>
-        <div class="signal-info">
-          <p>Current Signal: <span id="btc-signal">--</span></p>
-          <p>Strength: <span id="btc-strength">--</span></p>
-          <p>Entry: <span id="btc-entry">--</span></p>
-          <p>SL: <span id="btc-sl">--</span></p>
-          <p>TP: <span id="btc-tp">--</span></p>
-        </div>
-      </div>
-    </section>
+    </header>
 
-    <section class="chart-section">
-      <div id="chart" class="chart-container"></div>
-    </section>
+    <main>
+        <section class="asset-panel" id="xauusd-panel">
+            <h2>XAU/USD</h2>
+            <div class="signal-panel">
+                <p>15M Signal: <span id="xau-15m-signal">--</span></p>
+                <p>5M Signal: <span id="xau-5m-signal">--</span></p>
+                <p>Consensus: <span id="xau-consensus">--</span></p>
+                <p>Entry: <span id="xau-entry">--</span></p>
+                <p>Stop Loss: <span id="xau-sl">--</span></p>
+                <p>Take Profit: <span id="xau-tp">--</span></p>
+            </div>
+        </section>
 
-    <section class="consensus">
-      <h3>Multi-Timeframe Consensus</h3>
-      <p>15M Signal: <span id="sig-15m">--</span></p>
-      <p>5M Signal: <span id="sig-5m">--</span></p>
-      <p>Consensus: <span id="sig-consensus">--</span></p>
-    </section>
+        <section class="asset-panel" id="btcusd-panel">
+            <h2>BTC/USD</h2>
+            <div class="signal-panel">
+                <p>15M Signal: <span id="btc-15m-signal">--</span></p>
+                <p>5M Signal: <span id="btc-5m-signal">--</span></p>
+                <p>Consensus: <span id="btc-consensus">--</span></p>
+                <p>Entry: <span id="btc-entry">--</span></p>
+                <p>Stop Loss: <span id="btc-sl">--</span></p>
+                <p>Take Profit: <span id="btc-tp">--</span></p>
+            </div>
+        </section>
 
-    <footer>
-      <p>Risk Info: 1–2% per trade. Disclaimer: Trading involves risk.</p>
-    </footer>
-  </main>
+        <section id="chart-container"></section>
+        <p class="disclaimer">Trading involves risk. Risk 1–2% per trade.</p>
+    </main>
 
-  <script src="script.js"></script>
+    <script src="script.js"></script>
 </body>
 </html>
