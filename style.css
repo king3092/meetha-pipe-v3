@@ -1,18 +1,84 @@
-* { box-sizing: border-box; margin: 0; padding: 0; font-family: Arial, sans-serif; }
-body { background: #1e1e1e; color: #fff; }
-header { text-align: center; padding: 10px; }
-.timeframes button { margin: 5px; padding: 8px 12px; border: none; border-radius: 5px; cursor: pointer; }
-.timeframes .active { background: #0f0; color: #000; }
-.panels { display: flex; justify-content: space-around; margin: 20px 0; flex-wrap: wrap; }
-.panel { background: #2b2b2b; padding: 15px; border-radius: 10px; width: 300px; margin: 10px; }
-.panel h2 { text-align: center; margin-bottom: 10px; }
-.signal-info p { margin: 5px 0; }
-.chart-section { width: 95%; max-width: 1000px; margin: 20px auto; }
-.chart-container { height: 400px; background: #1e1e1e; border-radius: 10px; }
-.consensus { text-align: center; margin: 20px; }
-footer { text-align: center; margin-top: 20px; font-size: 0.85em; color: #aaa; }
+body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+    background: #111;
+    color: #eee;
+}
+
+header {
+    text-align: center;
+    padding: 20px;
+    background: #222;
+}
+
+.timeframe-buttons button {
+    padding: 10px 15px;
+    margin: 5px;
+    background: #333;
+    color: #eee;
+    border: none;
+    cursor: pointer;
+}
+
+.timeframe-buttons button.active {
+    background: #00b300;
+    color: #fff;
+}
+
+main {
+    padding: 20px;
+}
+
+.asset-panel {
+    background: #1a1a1a;
+    padding: 15px;
+    margin-bottom: 20px;
+    border-radius: 8px;
+}
+
+.signal-panel p {
+    margin: 5px 0;
+}
+
+#chart-container {
+    height: 400px;
+    margin-bottom: 20px;
+}
+
+.disclaimer {
+    text-align: center;
+    font-size: 14px;
+    color: #aaa;
+}
 
 /* Signal Colors */
-#xau-signal.buy, #btc-signal.buy { color: #0f0; }
-#xau-signal.sell, #btc-signal.sell { color: #f00; }
-#xau-signal.wait, #btc-signal.wait { color: #ff0; }
+#xau-15m-signal.buy,
+#xau-5m-signal.buy,
+#btc-15m-signal.buy,
+#btc-5m-signal.buy,
+#xau-consensus.buy,
+#btc-consensus.buy {
+    color: #00ff00;
+    font-weight: bold;
+}
+
+#xau-15m-signal.sell,
+#xau-5m-signal.sell,
+#btc-15m-signal.sell,
+#btc-5m-signal.sell,
+#xau-consensus.sell,
+#btc-consensus.sell {
+    color: #ff0000;
+    font-weight: bold;
+}
+
+#xau-15m-signal.wait,
+#xau-5m-signal.wait,
+#btc-15m-signal.wait,
+#btc-5m-signal.wait,
+#xau-consensus.wait,
+#btc-consensus.wait {
+    color: #ffff00;
+    font-weight: bold;
+}
