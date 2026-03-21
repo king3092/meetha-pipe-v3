@@ -3,147 +3,562 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>PRO 309HA | Sniper Signals v3.0</title>
+<title>Bitcoin & Gold 90% Accuracy Trading Strategy | MT5</title>
 <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@400;600;700&display=swap" rel="stylesheet">
 <style>
 :root {
-  --gold: #FFD700; --bitcoin: #F7931A; --green: #00FF88; --red: #FF3355;
-  --blue: #00BFFF; --bg: #050810; --card: #0D1628; --text: #E8EAF0;
+  --gold:#FFD700; --bitcoin:#F7931A;
+  --green:#00FF88; --red:#FF3355;
+  --blue:#00BFFF; --bg:#050810;
+  --card:#0D1628; --text:#E8EAF0;
 }
-* { margin:0; padding:0; box-sizing:border-box; }
-body { background:var(--bg); color:var(--text); font-family:'Rajdhani',sans-serif; overflow-x:hidden; }
+*{margin:0;padding:0;box-sizing:border-box;}
+html{scroll-behavior:smooth;}
+body{
+  background:var(--bg);
+  color:var(--text);
+  font-family:'Rajdhani',sans-serif;
+  overflow-x:hidden;
+}
+body::before{
+  content:'';position:fixed;inset:0;
+  background-image:
+    linear-gradient(rgba(0,191,255,0.03) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(0,191,255,0.03) 1px,transparent 1px);
+  background-size:40px 40px;
+  pointer-events:none;z-index:0;
+}
 
-/* Ticker Bar */
-.ticker-bar {
-  position:sticky; top:0; z-index:100; background:rgba(5,8,16,0.98);
-  backdrop-filter:blur(10px); border-bottom:1px solid rgba(255,215,0,0.3);
-  padding:8px 15px; display:flex; justify-content:space-between; align-items:center;
+/* BINANCE BAR */
+.bin-bar{
+  background:rgba(240,185,11,0.07);
+  border-bottom:1px solid rgba(240,185,11,0.2);
+  padding:7px 16px;
+  display:flex;align-items:center;gap:16px;
+  flex-wrap:wrap;position:relative;z-index:101;
 }
-.ticker-logo { font-family:'Orbitron',sans-serif; color:var(--gold); font-size:12px; letter-spacing:1px; }
+.bin-lbl{
+  font-family:'Orbitron',monospace;
+  font-size:10px;font-weight:900;
+  color:#F0B90B;letter-spacing:2px;flex-shrink:0;
+}
+.bin-items{display:flex;gap:16px;flex-wrap:wrap;align-items:center;}
+.bin-item{
+  display:flex;align-items:center;gap:5px;
+  font-family:'Orbitron',monospace;font-size:12px;font-weight:700;
+}
+.bin-sym{font-size:9px;opacity:0.45;letter-spacing:1px;}
 
-/* HERO SECTION - NO BLANK SPACE */
-.hero { 
-    text-align:center; padding:20px 10px 10px; /* Reduced Padding */
-    background: radial-gradient(circle at center, rgba(247,147,26,0.1) 0%, transparent 70%);
+/* TICKER */
+.ticker-bar{
+  position:sticky;top:0;z-index:100;
+  background:rgba(5,8,16,0.97);
+  backdrop-filter:blur(20px);
+  border-bottom:1px solid rgba(255,215,0,0.2);
+  padding:0 16px;
+  display:flex;align-items:center;
+  justify-content:space-between;
+  flex-wrap:wrap;gap:8px;min-height:55px;
 }
-.accuracy-num { 
-    font-family:'Orbitron',sans-serif; font-size:70px; font-weight:900;
-    background: linear-gradient(to bottom, var(--gold), var(--bitcoin));
-    -webkit-background-clip:text; -webkit-text-fill-color:transparent;
-    line-height:1; margin-bottom:5px;
+.tick-logo{
+  font-family:'Orbitron',monospace;
+  font-size:12px;font-weight:900;
+  color:var(--gold);letter-spacing:2px;
 }
-.hero p { opacity:0.6; font-size:14px; margin-bottom:15px; }
+.tick-prices{display:flex;gap:10px;flex-wrap:wrap;align-items:center;}
+.tick-item{
+  display:flex;align-items:center;gap:8px;
+  background:rgba(255,255,255,0.04);
+  border:1px solid rgba(255,255,255,0.08);
+  border-radius:8px;padding:6px 12px;
+}
+.tick-icon{font-size:16px;}
+.tick-info{min-width:100px;}
+.tick-pair{
+  font-family:'Orbitron',monospace;
+  font-size:9px;font-weight:700;
+  letter-spacing:1px;opacity:0.45;margin-bottom:2px;
+}
+.tick-price{
+  font-family:'Orbitron',monospace;
+  font-size:13px;font-weight:900;
+  transition:color 0.4s;
+}
+.tick-chg{
+  font-size:11px;font-weight:700;
+  padding:2px 8px;border-radius:5px;
+  white-space:nowrap;
+}
+.up{background:rgba(0,255,136,0.15);color:var(--green);}
+.down{background:rgba(255,51,85,0.15);color:var(--red);}
+.tick-live{
+  display:flex;align-items:center;gap:5px;
+  font-size:10px;letter-spacing:3px;
+  color:var(--green);font-family:'Orbitron',monospace;
+}
+.ldot{
+  width:7px;height:7px;background:var(--green);
+  border-radius:50%;
+  animation:blink 1s ease-in-out infinite;
+}
+@keyframes blink{
+  0%,100%{opacity:1;box-shadow:0 0 8px var(--green);}
+  50%{opacity:0.3;box-shadow:none;}
+}
 
-/* GRID LAYOUT */
-.grid-container {
-    display:grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-    gap:20px; padding:15px; max-width:1200px; margin:0 auto;
+/* HERO — fixed blank space */
+.hero{
+  position:relative;
+  min-height:calc(100vh - 90px); /* minus headers */
+  display:flex;flex-direction:column;
+  align-items:center;justify-content:center;
+  text-align:center;
+  padding:40px 20px 60px;
+  z-index:1;overflow:hidden;
 }
-.card {
-    background:var(--card); border-radius:15px; padding:20px;
-    border:1px solid rgba(255,255,255,0.08); position:relative;
+.hero-glow{
+  position:absolute;top:50%;left:50%;
+  transform:translate(-50%,-50%);
+  width:600px;height:600px;
+  background:radial-gradient(circle,rgba(247,147,26,0.13) 0%,rgba(0,191,255,0.06) 40%,transparent 70%);
+  pointer-events:none;
+  animation:pg 4s ease-in-out infinite;
 }
-.price-tag { font-family:'Orbitron',sans-serif; font-size:28px; color:var(--green); margin:10px 0; display:block; }
-
-/* TV WIDGETS */
-.tv-widget { height:350px; border-radius:10px; overflow:hidden; border:1px solid #222; margin:10px 0; }
-
-/* SIGNAL SYSTEM */
-.sig-badge {
-    padding:10px; border-radius:8px; text-align:center; font-weight:bold;
-    font-family:'Orbitron',sans-serif; font-size:13px;
+@keyframes pg{
+  0%,100%{transform:translate(-50%,-50%) scale(1);}
+  50%{transform:translate(-50%,-50%) scale(1.12);}
 }
-.neutral { background:rgba(255,255,255,0.05); color:#aaa; border:1px solid #444; }
-.buy-signal { background:rgba(0,255,136,0.15); color:var(--green); border:1px solid var(--green); box-shadow:0 0 10px rgba(0,255,136,0.2); }
-.sell-signal { background:rgba(255,51,85,0.15); color:var(--red); border:1px solid var(--red); box-shadow:0 0 10px rgba(255,51,85,0.2); }
+@keyframes fu{
+  from{opacity:0;transform:translateY(24px);}
+  to{opacity:1;transform:translateY(0);}
+}
+.badge{
+  display:inline-flex;align-items:center;gap:8px;
+  background:rgba(255,215,0,0.08);
+  border:1px solid rgba(255,215,0,0.3);
+  padding:7px 20px;border-radius:50px;
+  font-size:11px;letter-spacing:4px;
+  text-transform:uppercase;color:var(--gold);
+  margin-bottom:20px;
+  animation:fu 0.6s ease both;
+}
+.hero-title{
+  font-family:'Orbitron',monospace;
+  font-size:clamp(22px,5vw,54px);
+  font-weight:900;line-height:1.1;
+  margin-bottom:6px;
+  animation:fu 0.6s 0.12s ease both;
+}
+.btc-c{color:var(--bitcoin);}
+.gold-c{color:var(--gold);}
+.acc-num{
+  font-family:'Orbitron',monospace;
+  font-size:clamp(80px,18vw,150px);
+  font-weight:900;line-height:0.9;
+  background:linear-gradient(135deg,var(--gold),var(--bitcoin),var(--green));
+  -webkit-background-clip:text;
+  -webkit-text-fill-color:transparent;
+  background-clip:text;
+  animation:fu 0.6s 0.24s ease both;
+  filter:drop-shadow(0 0 40px rgba(247,147,26,0.3));
+}
+.acc-lbl{
+  font-family:'Orbitron',monospace;
+  font-size:clamp(12px,2vw,20px);
+  font-weight:700;letter-spacing:8px;
+  color:rgba(232,234,240,0.38);
+  text-transform:uppercase;margin-bottom:22px;
+  animation:fu 0.6s 0.36s ease both;
+}
+.hero-desc{
+  font-size:clamp(14px,2vw,17px);
+  color:rgba(232,234,240,0.62);
+  max-width:520px;line-height:1.7;
+  margin-bottom:30px;
+  animation:fu 0.6s 0.48s ease both;
+  direction:rtl;
+}
+.pills{
+  display:flex;gap:10px;flex-wrap:wrap;
+  justify-content:center;
+  animation:fu 0.6s 0.6s ease both;
+}
+.pill{
+  padding:9px 18px;border-radius:7px;
+  font-weight:700;font-size:12px;
+  letter-spacing:2px;text-transform:uppercase;
+}
+.pill.bb{background:rgba(0,191,255,0.1);border:1px solid rgba(0,191,255,0.4);color:var(--blue);}
+.pill.rsi{background:rgba(0,255,136,0.1);border:1px solid rgba(0,255,136,0.4);color:var(--green);}
+.pill.vol{background:rgba(255,51,85,0.1);border:1px solid rgba(255,51,85,0.4);color:var(--red);}
 
-@media (max-width: 600px) { .accuracy-num { font-size:50px; } }
+/* SECTIONS */
+.section{
+  position:relative;z-index:1;
+  padding:60px 20px;
+  max-width:1100px;margin:0 auto;
+}
+.sec-lbl{
+  text-align:center;font-size:11px;
+  letter-spacing:5px;text-transform:uppercase;
+  color:var(--gold);opacity:0.65;margin-bottom:7px;
+}
+.sec-title{
+  text-align:center;
+  font-family:'Orbitron',monospace;
+  font-size:clamp(20px,4vw,34px);
+  font-weight:700;margin-bottom:36px;
+}
+
+/* PRICE CARDS */
+.price-cards{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(280px,1fr));
+  gap:22px;margin-bottom:10px;
+}
+.pcard{
+  background:var(--card);
+  border-radius:16px;padding:26px;
+  border:1px solid rgba(255,255,255,0.07);
+  position:relative;overflow:hidden;
+  transition:transform 0.3s;
+}
+.pcard:hover{transform:translateY(-4px);}
+.pcard.btc{border-top:3px solid var(--bitcoin);}
+.pcard.xau{border-top:3px solid var(--gold);}
+.pcard::after{
+  content:'';position:absolute;
+  top:-50px;right:-50px;
+  width:160px;height:160px;
+  border-radius:50%;opacity:0.05;
+}
+.pcard.btc::after{background:var(--bitcoin);}
+.pcard.xau::after{background:var(--gold);}
+.ph{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;}
+.psym{display:flex;align-items:center;gap:10px;}
+.picon{font-size:26px;}
+.pname{font-family:'Orbitron',monospace;font-size:15px;font-weight:900;}
+.ppair{font-size:10px;letter-spacing:2px;opacity:0.38;margin-top:2px;}
+.ptf{
+  background:rgba(255,255,255,0.05);
+  border:1px solid rgba(255,255,255,0.1);
+  border-radius:6px;padding:4px 10px;
+  font-size:10px;font-weight:700;
+  letter-spacing:1px;opacity:0.65;
+  font-family:'Orbitron',monospace;
+}
+.pprice{
+  font-family:'Orbitron',monospace;
+  font-size:clamp(24px,4vw,34px);
+  font-weight:900;margin-bottom:4px;
+  transition:color 0.3s;
+}
+.pcard.btc .pprice{color:var(--bitcoin);}
+.pcard.xau .pprice{color:var(--gold);}
+.psub{font-size:11px;opacity:0.38;margin-bottom:12px;}
+.mchart{
+  display:flex;align-items:flex-end;
+  gap:3px;height:44px;margin-bottom:14px;
+}
+.mbar{
+  flex:1;border-radius:3px 3px 0 0;
+  opacity:0.6;
+  animation:bu 0.5s ease both;
+}
+@keyframes bu{
+  from{transform:scaleY(0);transform-origin:bottom;}
+  to{transform:scaleY(1);transform-origin:bottom;}
+}
+.pstats{
+  display:grid;grid-template-columns:1fr 1fr 1fr;
+  gap:8px;padding-top:14px;
+  border-top:1px solid rgba(255,255,255,0.07);
+  margin-bottom:12px;
+}
+.pst{text-align:center;}
+.pstl{font-size:9px;letter-spacing:2px;opacity:0.38;text-transform:uppercase;margin-bottom:3px;}
+.pstv{font-family:'Orbitron',monospace;font-size:12px;font-weight:700;}
+.sbadge{
+  display:flex;align-items:center;justify-content:center;
+  gap:6px;padding:8px 14px;border-radius:7px;
+  font-size:12px;font-weight:700;
+  letter-spacing:0.5px;width:100%;
+}
+.sbadge.buy{background:rgba(0,255,136,0.12);border:1px solid rgba(0,255,136,0.28);color:var(--green);}
+.sbadge.sell{background:rgba(255,51,85,0.12);border:1px solid rgba(255,51,85,0.28);color:var(--red);}
+.sbadge.wait{background:rgba(255,215,0,0.08);border:1px solid rgba(255,215,0,0.22);color:var(--gold);}
+
+/* TRADINGVIEW */
+.tv-grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(300px,1fr));
+  gap:22px;
+}
+.tvc{
+  background:var(--card);
+  border-radius:16px;overflow:hidden;
+  border:1px solid rgba(255,255,255,0.07);
+}
+.tvh{
+  display:flex;align-items:center;
+  justify-content:space-between;
+  padding:14px 18px;
+  border-bottom:1px solid rgba(255,255,255,0.06);
+}
+.tvt{font-family:'Orbitron',monospace;font-size:13px;font-weight:700;}
+.tvb{
+  font-size:9px;font-weight:700;
+  letter-spacing:2px;padding:4px 10px;
+  border-radius:5px;
+}
+.tvb.btc{background:rgba(247,147,26,0.18);color:var(--bitcoin);}
+.tvb.xau{background:rgba(255,215,0,0.14);color:var(--gold);}
+.tvf{width:100%;height:380px;border:none;display:block;}
+
+/* INDICATORS */
+.ind-grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(280px,1fr));
+  gap:22px;margin-top:36px;
+}
+.icard{
+  background:var(--card);
+  border-radius:16px;padding:28px;
+  border:1px solid rgba(255,255,255,0.07);
+  position:relative;overflow:hidden;
+  transition:transform 0.3s;
+}
+.icard:hover{transform:translateY(-4px);}
+.inum{
+  position:absolute;top:8px;right:14px;
+  font-family:'Orbitron',monospace;
+  font-size:65px;font-weight:900;
+  opacity:0.05;line-height:1;
+}
+.iico{font-size:32px;margin-bottom:12px;}
+.inm{font-family:'Orbitron',monospace;font-size:16px;font-weight:700;margin-bottom:3px;}
+.isub{font-size:10px;letter-spacing:2px;opacity:0.38;text-transform:uppercase;margin-bottom:12px;}
+.idsc{font-size:14px;line-height:1.7;opacity:0.68;direction:rtl;margin-bottom:14px;}
+.rules{display:flex;flex-direction:column;gap:8px;}
+.rule{
+  display:flex;align-items:flex-start;gap:9px;
+  background:rgba(255,255,255,0.03);
+  padding:9px 12px;border-radius:7px;
+  font-size:13px;direction:rtl;line-height:1.5;
+}
+.rdot{width:8px;height:8px;border-radius:50%;margin-top:4px;flex-shrink:0;}
+.rdot.buy{background:var(--green);box-shadow:0 0 7px var(--green);}
+.rdot.sell{background:var(--red);box-shadow:0 0 7px var(--red);}
+
+/* SETUP */
+.sg{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(200px,1fr));
+  gap:18px;margin-top:36px;
+}
+.sc{
+  background:var(--card);
+  border-radius:14px;padding:22px 16px;
+  border:1px solid rgba(255,255,255,0.07);
+  text-align:center;transition:transform 0.3s;
+}
+.sc:hover{transform:translateY(-3px);}
+.si{font-size:28px;margin-bottom:10px;}
+.sl{font-size:9px;letter-spacing:3px;text-transform:uppercase;opacity:0.4;margin-bottom:8px;font-family:'Orbitron',monospace;}
+.sv{font-family:'Orbitron',monospace;font-size:20px;font-weight:900;margin-bottom:7px;}
+.sd{font-size:12px;opacity:0.52;direction:rtl;line-height:1.5;}
+
+/* DISCLAIMER */
+.disc{
+  position:relative;z-index:1;
+  max-width:760px;margin:0 auto 56px;
+  padding:24px 26px;
+  background:rgba(255,51,85,0.05);
+  border:1px solid rgba(255,51,85,0.2);
+  border-radius:13px;text-align:center;
+}
+.dt{font-family:'Orbitron',monospace;font-size:12px;font-weight:700;color:var(--red);letter-spacing:3px;margin-bottom:9px;}
+.disc p{font-size:13px;opacity:0.58;line-height:1.7;direction:rtl;}
+
+.divider{
+  position:relative;z-index:1;height:1px;
+  background:linear-gradient(90deg,transparent,rgba(255,215,0,0.22),transparent);
+  max-width:1100px;margin:0 auto;
+}
+footer{
+  position:relative;z-index:1;
+  border-top:1px solid rgba(255,255,255,0.05);
+  padding:24px 20px;text-align:center;
+  font-family:'Orbitron',monospace;
+  font-size:10px;letter-spacing:2px;opacity:0.28;
+}
 </style>
 </head>
 <body>
 
+<!-- BINANCE TOP BAR -->
+<div class="bin-bar">
+  <div class="bin-lbl">🔶 BINANCE</div>
+  <div class="bin-items">
+    <div class="bin-item"><span class="bin-sym">BTCUSDT</span><span id="b-btc" style="color:var(--bitcoin)">--</span></div>
+    <div class="bin-item"><span class="bin-sym">ETHUSDT</span><span id="b-eth" style="color:var(--blue)">--</span></div>
+    <div class="bin-item"><span class="bin-sym">BNBUSDT</span><span id="b-bnb" style="color:#F0B90B">--</span></div>
+    <div class="bin-item"><span class="bin-sym">XAUUSDT</span><span id="b-xau" style="color:var(--gold)">--</span></div>
+  </div>
+</div>
+
+<!-- TICKER -->
 <div class="ticker-bar">
-    <div class="ticker-logo">⚡ PRO-309HA SNIPER</div>
-    <div id="clock" style="color:var(--blue); font-size:12px; font-family:monospace;">LIVE</div>
+  <div class="tick-logo">⚡ MT5 PRO</div>
+  <div class="tick-prices">
+    <div class="tick-item">
+      <div class="tick-icon">₿</div>
+      <div class="tick-info">
+        <div class="tick-pair">BTC / USD</div>
+        <div class="tick-price" id="t-btc">--</div>
+      </div>
+      <div class="tick-chg up" id="t-btc-c">--</div>
+    </div>
+    <div class="tick-item">
+      <div class="tick-icon">🥇</div>
+      <div class="tick-info">
+        <div class="tick-pair">XAU / USD</div>
+        <div class="tick-price" id="t-xau">--</div>
+      </div>
+      <div class="tick-chg up" id="t-xau-c">--</div>
+    </div>
+  </div>
+  <div class="tick-live"><div class="ldot"></div>LIVE</div>
 </div>
 
+<!-- HERO -->
 <div class="hero">
-    <div class="accuracy-num">90%</div>
-    <h2 style="font-family:'Orbitron'; font-size:18px; color:var(--gold);">TRIPLE CONFIRMATION</h2>
-    <p>Bollinger Bands | RSI | High Volume</p>
+  <div class="hero-glow"></div>
+  <div class="badge">⚡ MT5 Killer Combination Strategy</div>
+  <h1 class="hero-title">
+    <span class="btc-c">Bitcoin</span> &amp; <span class="gold-c">Gold</span> Trading
+  </h1>
+  <div class="acc-num">90%</div>
+  <div class="acc-lbl">Accuracy Strategy</div>
+  <p class="hero-desc">3 indicators ka aisa Killer Combination jo aapko confirm trade setup dega — Bollinger Bands, RSI, aur Volume</p>
+  <div class="pills">
+    <div class="pill bb">📊 Bollinger Bands</div>
+    <div class="pill rsi">📈 RSI</div>
+    <div class="pill vol">🔊 Volume</div>
+  </div>
 </div>
 
-<div class="grid-container">
-    <div class="card">
-        <div style="display:flex; justify-content:space-between; align-items:center;">
-            <span style="color:var(--bitcoin); font-weight:bold;">BTC/USDT</span>
-            <span id="btc-chg" style="font-size:12px;">--%</span>
-        </div>
-        <span class="price-tag" id="btc-price">FETCHING...</span>
-        <div class="tv-widget">
-            <iframe src="https://s.tradingview.com/widgetembed/?symbol=BINANCE:BTCUSDT&interval=5&theme=dark" width="100%" height="100%" frameborder="0"></iframe>
-        </div>
-        <div id="btc-signal" class="sig-badge neutral">WAITING FOR DATA...</div>
-    </div>
+<div class="divider"></div>
 
-    <div class="card">
-        <div style="display:flex; justify-content:space-between; align-items:center;">
-            <span style="color:var(--gold); font-weight:bold;">XAU/USD (GOLD)</span>
-            <span id="xau-chg" style="font-size:12px;">--%</span>
-        </div>
-        <span class="price-tag" id="xau-price" style="color:var(--gold)">FETCHING...</span>
-        <div class="tv-widget">
-            <iframe src="https://s.tradingview.com/widgetembed/?symbol=OANDA:XAUUSD&interval=15&theme=dark" width="100%" height="100%" frameborder="0"></iframe>
-        </div>
-        <div id="xau-signal" class="sig-badge neutral">WAITING FOR DATA...</div>
+<!-- LIVE PRICES -->
+<div class="section">
+  <div class="sec-lbl">Binance Live Data</div>
+  <div class="sec-title">BTC/USD &amp; XAU/USD <span class="gold-c">Live Prices</span></div>
+  <div class="price-cards">
+    <div class="pcard btc">
+      <div class="ph">
+        <div class="psym"><div class="picon">₿</div><div><div class="pname">BITCOIN</div><div class="ppair">BTC / USDT</div></div></div>
+        <div class="ptf">M5</div>
+      </div>
+      <div class="pprice" id="p-btc">Loading...</div>
+      <div class="psub">Bitcoin / US Dollar • Binance</div>
+      <div class="mchart" id="c-btc"></div>
+      <div class="pstats">
+        <div class="pst"><div class="pstl">24h High</div><div class="pstv" id="h-btc" style="color:var(--green)">--</div></div>
+        <div class="pst"><div class="pstl">24h Low</div><div class="pstv" id="l-btc" style="color:var(--red)">--</div></div>
+        <div class="pst"><div class="pstl">Change</div><div class="pstv" id="pc-btc">--</div></div>
+      </div>
+      <div class="sbadge wait" id="s-btc">⏳ Signal Loading...</div>
     </div>
+    <div class="pcard xau">
+      <div class="ph">
+        <div class="psym"><div class="picon">🥇</div><div><div class="pname">GOLD</div><div class="ppair">XAU / USD</div></div></div>
+        <div class="ptf">M15</div>
+      </div>
+      <div class="pprice" id="p-xau">Loading...</div>
+      <div class="psub">Gold Spot / US Dollar • per Troy Oz</div>
+      <div class="mchart" id="c-xau"></div>
+      <div class="pstats">
+        <div class="pst"><div class="pstl">24h High</div><div class="pstv" id="h-xau" style="color:var(--green)">--</div></div>
+        <div class="pst"><div class="pstl">24h Low</div><div class="pstv" id="l-xau" style="color:var(--red)">--</div></div>
+        <div class="pst"><div class="pstl">Change</div><div class="pstv" id="pc-xau">--</div></div>
+      </div>
+      <div class="sbadge wait" id="s-xau">⏳ Signal Loading...</div>
+    </div>
+  </div>
 </div>
 
-<script>
-// Logic to bypass CORS using a different public API
-async function getPrices() {
-    try {
-        const response = await fetch('https://min-api.cryptocompare.com/data/pricemultifull?fsyms=BTC,PAXG&tsyms=USD');
-        const data = await response.json();
+<div class="divider"></div>
 
-        // Update BTC
-        const btc = data.RAW.BTC.USD;
-        document.getElementById('btc-price').innerText = '$' + btc.PRICE.toLocaleString();
-        document.getElementById('btc-chg').innerText = btc.CHANGEPCT24HOUR.toFixed(2) + '%';
-        updateSignal('btc-signal', btc.CHANGEPCT24HOUR);
+<!-- TRADINGVIEW CHARTS -->
+<div class="section">
+  <div class="sec-lbl">TradingView Live Charts</div>
+  <div class="sec-title"><span class="gold-c">Live Market</span> Charts</div>
+  <div class="tv-grid">
+    <div class="tvc">
+      <div class="tvh">
+        <div class="tvt">₿ BTCUSDT — Bitcoin</div>
+        <div class="tvb btc">M5 • LIVE</div>
+      </div>
+      <iframe class="tvf"
+        src="https://s.tradingview.com/widgetembed/?frameElementId=tv_btc&symbol=BINANCE%3ABTCUSDT&interval=5&hidesidetoolbar=0&hidetoptoolbar=0&symboledit=1&saveimage=1&studies=BB%40tv-basicstudies%1FRSI%40tv-basicstudies%1FVolume%40tv-basicstudies&theme=dark&style=1&timezone=Asia%2FKarachi&withdateranges=1&locale=en&toolbarbg=F1F3F6&utm_source=&utm_medium=widget_new&utm_campaign=chart"
+        allowtransparency="true" frameborder="0" scrolling="no" allowfullscreen="">
+      </iframe>
+    </div>
+    <div class="tvc">
+      <div class="tvh">
+        <div class="tvt">🥇 XAUUSD — Gold</div>
+        <div class="tvb xau">M15 • LIVE</div>
+      </div>
+      <iframe class="tvf"
+        src="https://s.tradingview.com/widgetembed/?frameElementId=tv_xau&symbol=OANDA%3AXAUUSD&interval=15&hidesidetoolbar=0&hidetoptoolbar=0&symboledit=1&saveimage=1&studies=BB%40tv-basicstudies%1FRSI%40tv-basicstudies%1FVolume%40tv-basicstudies&theme=dark&style=1&timezone=Asia%2FKarachi&withdateranges=1&locale=en&toolbarbg=F1F3F6&utm_source=&utm_medium=widget_new&utm_campaign=chart"
+        allowtransparency="true" frameborder="0" scrolling="no" allowfullscreen="">
+      </iframe>
+    </div>
+  </div>
+</div>
 
-        // Update GOLD (PAXG is 1:1 Gold)
-        const xau = data.RAW.PAXG.USD;
-        document.getElementById('xau-price').innerText = '$' + xau.PRICE.toLocaleString();
-        document.getElementById('xau-chg').innerText = xau.CHANGEPCT24HOUR.toFixed(2) + '%';
-        updateSignal('xau-signal', xau.CHANGEPCT24HOUR);
+<div class="divider"></div>
 
-    } catch (error) {
-        console.log("API Error, Retrying...");
-    }
-}
+<!-- 3 INDICATORS -->
+<div class="section">
+  <div class="sec-lbl">The Killer Combination</div>
+  <div class="sec-title">3 <span class="gold-c">Indicator</span> Strategy</div>
+  <div class="ind-grid">
+    <div class="icard" style="border-top:3px solid var(--blue);">
+      <div class="inum">01</div>
+      <div class="iico">📊</div>
+      <div class="inm">Bollinger Bands</div>
+      <div class="isub">The Boundaries</div>
+      <div class="idsc">Market ki hadd batata hai. Upar aur niche ki lines market ki limits hain.</div>
+      <div class="rules">
+        <div class="rule"><div class="rdot sell"></div><span>Upar wali line touch → Overbought → SELL signal</span></div>
+        <div class="rule"><div class="rdot buy"></div><span>Niche wali line touch → Oversold → BUY signal</span></div>
+      </div>
+    </div>
+    <div class="icard" style="border-top:3px solid var(--green);">
+      <div class="inum">02</div>
+      <div class="iico">📈</div>
+      <div class="inm">RSI</div>
+      <div class="isub">The Confirmation</div>
+      <div class="idsc">Market ki thakan napta hai. RSI batata hai ke market palatne wali hai ya nahi.</div>
+      <div class="rules">
+        <div class="rule"><div class="rdot buy"></div><span>RSI 30 ke niche → Strong BUY confirm</span></div>
+        <div class="rule"><div class="rdot sell"></div><span>RSI 70 se upar → Strong SELL confirm</span></div>
+      </div>
+    </div>
+    <div class="icard" style="border-top:3px solid var(--red);">
+      <div class="inum">03</div>
+      <div class="iico">🔊</div>
+      <div class="inm">Volume</div>
+      <div class="isub">The Power — Final Confirmation</div>
+      <div class="idsc">Market ki asli taqat — bina volume ke koi bhi move FAKE ho sakti hai.</div>
+      <div class="rules">
+        <div class="rule"><div class="rdot buy"></div><span>Volume pichli 5 bars se uncha → Bade Players → TRADE ENTER</span></div>
+        <div class="rule"><div class="rdot sell"></div><span>Low volume par move → Fake breakout → IGNORE</span></div>
+      </div>
+    </div>
+  </div>
+</div>
 
-function updateSignal(id, change) {
-    const el = document.getElementById(id);
-    if (change < -1.5) {
-        el.innerText = "🚀 STRONG BUY SIGNAL";
-        el.className = "sig-badge buy-signal";
-    } else if (change > 1.5) {
-        el.innerText = "📉 STRONG SELL SIGNAL";
-        el.className = "sig-badge sell-signal";
-    } else {
-        el.innerText = "⏳ MARKET NEUTRAL - WAIT";
-        el.className = "sig-badge neutral";
-    }
-}
-
-setInterval(getPrices, 8000);
-getPrices();
-
-// Clock
-setInterval(() => {
-    document.getElementById('clock').innerText = new Date().toLocaleTimeString();
-}, 1000);
-</script>
-</body>
-</html>
+<div class
