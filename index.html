@@ -1,708 +1,396 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8"/>
-<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>APEX SIGNALS — AI Trading Intelligence</title>
-<link rel="preconnect" href="https://fonts.googleapis.com"/>
-<link href="https://fonts.googleapis.com/css2?family=Space+Mono:ital,wght@0,400;0,700;1,400&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet"/>
-<script src="https://cdn.jsdelivr.net/npm/lightweight-charts@4.1.3/dist/lightweight-charts.standalone.production.js"></script>
-<style>
-  :root {
-    --bg-void: #050508;
-    --bg-panel: #0c0d12;
-    --bg-card: #12131a;
-    --bg-elevated: #1a1b24;
-    --border: #1e2030;
-    --border-bright: #2a2d40;
-    --text-primary: #e8eaf2;
-    --text-secondary: #8b90a8;
-    --text-muted: #4a4f6a;
-    --buy: #00e676;
-    --buy-dim: #00c85360;
-    --buy-glow: #00e67620;
-    --sell: #ff3d71;
-    --sell-dim: #ff3d7160;
-    --sell-glow: #ff3d7120;
-    --wait: #ffc947;
-    --wait-dim: #ffc94760;
-    --wait-glow: #ffc94720;
-    --accent: #6c63ff;
-    --accent-dim: #6c63ff40;
-    --gold: #ffd700;
-    --gold-dim: #ffd70030;
-  }
-
-  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
-  html { font-size: 14px; scroll-behavior: smooth; }
-
-  body {
-    background: var(--bg-void);
-    color: var(--text-primary);
-    font-family: 'Space Mono', monospace;
-    min-height: 100vh;
-    overflow-x: hidden;
-  }
-
-  /* SCROLLBAR */
-  ::-webkit-scrollbar { width: 4px; height: 4px; }
-  ::-webkit-scrollbar-track { background: var(--bg-void); }
-  ::-webkit-scrollbar-thumb { background: var(--border-bright); border-radius: 2px; }
-
-  /* HEADER */
-  .header {
-    position: sticky; top: 0; z-index: 100;
-    background: rgba(5,5,8,0.95);
-    backdrop-filter: blur(20px);
-    border-bottom: 1px solid var(--border);
-    padding: 0 24px;
-    height: 60px;
-    display: flex; align-items: center; justify-content: space-between;
-  }
-
-  .logo {
-    display: flex; align-items: center; gap: 10px;
-  }
-
-  .logo-icon {
-    width: 32px; height: 32px;
-    background: linear-gradient(135deg, var(--accent), #a78bfa);
-    border-radius: 8px;
-    display: flex; align-items: center; justify-content: center;
-    font-family: 'Syne', sans-serif;
-    font-weight: 800; font-size: 13px;
-    color: white;
-    box-shadow: 0 0 20px var(--accent-dim);
-  }
-
-  .logo-text {
-    font-family: 'Syne', sans-serif;
-    font-weight: 800; font-size: 16px;
-    letter-spacing: 2px;
-    background: linear-gradient(135deg, #e8eaf2, #a78bfa);
-    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
-  }
-
-  .header-right {
-    display: flex; align-items: center; gap: 16px;
-  }
-
-  .live-badge {
-    display: flex; align-items: center; gap: 6px;
-    background: var(--buy-glow);
-    border: 1px solid var(--buy-dim);
-    border-radius: 20px; padding: 4px 12px;
-    font-size: 11px; color: var(--buy);
-    font-weight: 700; letter-spacing: 1px;
-  }
-
-  .live-dot {
-    width: 7px; height: 7px;
-    background: var(--buy); border-radius: 50%;
-    animation: pulse-dot 1.5s ease-in-out infinite;
-  }
-
-  @keyframes pulse-dot {
-    0%,100% { opacity: 1; transform: scale(1); }
-    50% { opacity: 0.4; transform: scale(0.7); }
-  }
-
-  .market-time {
-    font-size: 11px; color: var(--text-secondary);
-    letter-spacing: 1px;
-  }
-
-  /* TICKER BAR */
-  .ticker-bar {
-    background: var(--bg-panel);
-    border-bottom: 1px solid var(--border);
-    padding: 0 24px;
-    height: 44px;
-    display: flex; align-items: center; gap: 32px;
-    overflow: hidden;
-  }
-
-  .ticker-item {
-    display: flex; align-items: center; gap: 10px;
-    white-space: nowrap; flex-shrink: 0;
-  }
-
-  .ticker-symbol {
-    font-family: 'Syne', sans-serif;
-    font-weight: 700; font-size: 12px;
-    color: var(--text-secondary);
-    letter-spacing: 1px;
-  }
-
-  .ticker-price {
-    font-weight: 700; font-size: 14px;
-    transition: color 0.3s;
-  }
-
-  .ticker-change {
-    font-size: 11px; padding: 2px 7px; border-radius: 4px;
-  }
-
-  .ticker-change.up { color: var(--buy); background: var(--buy-glow); }
-  .ticker-change.down { color: var(--sell); background: var(--sell-glow); }
-
-  .ticker-divider {
-    width: 1px; height: 24px; background: var(--border); flex-shrink: 0;
-  }
-
-  /* MAIN GRID */
-  .main {
-    display: grid;
-    grid-template-columns: 1fr 340px;
-    grid-template-rows: auto;
-    gap: 0;
-    height: calc(100vh - 104px);
-    overflow: hidden;
-  }
-
-  /* LEFT PANEL */
-  .left-panel {
-    display: flex; flex-direction: column;
-    border-right: 1px solid var(--border);
-    overflow: hidden;
-  }
-
-  /* ASSET TABS */
-  .asset-tabs {
-    display: flex;
-    border-bottom: 1px solid var(--border);
-    background: var(--bg-panel);
-  }
-
-  .asset-tab {
-    flex: 1; padding: 0 20px; height: 48px;
-    display: flex; align-items: center; justify-content: center; gap: 10px;
-    cursor: pointer; border: none;
-    background: transparent; color: var(--text-secondary);
-    font-family: 'Syne', sans-serif; font-weight: 700;
-    font-size: 13px; letter-spacing: 1px;
-    transition: all 0.2s; border-bottom: 2px solid transparent;
-    position: relative;
-  }
-
-  .asset-tab.active {
-    color: var(--text-primary);
-    border-bottom-color: var(--accent);
-    background: var(--bg-card);
-  }
-
-  .asset-tab-price {
-    font-family: 'Space Mono', monospace;
-    font-size: 12px; font-weight: 400;
-  }
-
-  /* TF TABS */
-  .tf-bar {
-    display: flex; align-items: center; gap: 4px;
-    padding: 8px 16px;
-    background: var(--bg-panel);
-    border-bottom: 1px solid var(--border);
-  }
-
-  .tf-label {
-    font-size: 10px; color: var(--text-muted);
-    letter-spacing: 1px; margin-right: 8px;
-    text-transform: uppercase;
-  }
-
-  .tf-btn {
-    padding: 4px 12px; border-radius: 4px;
-    background: transparent; border: 1px solid var(--border);
-    color: var(--text-secondary); font-family: 'Space Mono', monospace;
-    font-size: 11px; cursor: pointer; transition: all 0.2s;
-  }
-
-  .tf-btn.active {
-    background: var(--accent-dim); border-color: var(--accent);
-    color: var(--text-primary);
-  }
-
-  .tf-btn:hover:not(.active) {
-    border-color: var(--border-bright); color: var(--text-primary);
-  }
-
-  .tf-spacer { flex: 1; }
-
-  .last-update {
-    font-size: 10px; color: var(--text-muted);
-    display: flex; align-items: center; gap: 4px;
-  }
-
-  /* CHART */
-  .chart-area {
-    flex: 1; position: relative; overflow: hidden;
-  }
-
-  #chart-container {
-    width: 100%; height: 100%;
-  }
-
-  .chart-loading {
-    position: absolute; inset: 0;
-    display: flex; align-items: center; justify-content: center;
-    flex-direction: column; gap: 12px;
-    background: var(--bg-panel); z-index: 10;
-  }
-
-  .spinner {
-    width: 36px; height: 36px;
-    border: 2px solid var(--border);
-    border-top-color: var(--accent);
-    border-radius: 50%;
-    animation: spin 0.8s linear infinite;
-  }
-
-  @keyframes spin { to { transform: rotate(360deg); } }
-
-  /* INDICATOR BAR */
-  .indicator-bar {
-    display: flex; gap: 0;
-    border-top: 1px solid var(--border);
-    background: var(--bg-panel);
-    overflow-x: auto;
-  }
-
-  .ind-cell {
-    flex-shrink: 0; padding: 10px 16px;
-    border-right: 1px solid var(--border);
-    display: flex; flex-direction: column; gap: 3px;
-  }
-
-  .ind-label {
-    font-size: 9px; color: var(--text-muted);
-    text-transform: uppercase; letter-spacing: 1px;
-  }
-
-  .ind-value {
-    font-size: 12px; font-weight: 700; font-family: 'Space Mono', monospace;
-  }
-
-  .ind-sub {
-    font-size: 9px; color: var(--text-secondary);
-  }
-
-  .bull { color: var(--buy); }
-  .bear { color: var(--sell); }
-  .neut { color: var(--wait); }
-
-  /* RIGHT PANEL */
-  .right-panel {
-    display: flex; flex-direction: column;
-    background: var(--bg-panel);
-    overflow-y: auto; overflow-x: hidden;
-  }
-
-  /* SIGNAL BOX */
-  .signal-box {
-    margin: 16px;
-    border-radius: 12px;
-    padding: 20px;
-    border: 1px solid var(--border);
-    position: relative; overflow: hidden;
-    transition: all 0.4s;
-  }
-
-  .signal-box.buy {
-    background: linear-gradient(135deg, #001a0e, #003020);
-    border-color: var(--buy-dim);
-    box-shadow: 0 0 30px var(--buy-glow), inset 0 0 30px var(--buy-glow);
-  }
-
-  .signal-box.sell {
-    background: linear-gradient(135deg, #1a000a, #300020);
-    border-color: var(--sell-dim);
-    box-shadow: 0 0 30px var(--sell-glow), inset 0 0 30px var(--sell-glow);
-  }
-
-  .signal-box.wait {
-    background: linear-gradient(135deg, #0f0f00, #1a1500);
-    border-color: var(--wait-dim);
-    box-shadow: 0 0 20px var(--wait-glow);
-  }
-
-  .signal-box.loading {
-    background: var(--bg-card);
-    border-color: var(--border-bright);
-  }
-
-  .signal-tag {
-    font-family: 'Syne', sans-serif;
-    font-weight: 800; font-size: 11px;
-    letter-spacing: 3px; text-transform: uppercase;
-    margin-bottom: 8px; opacity: 0.7;
-  }
-
-  .signal-main {
-    font-family: 'Syne', sans-serif;
-    font-weight: 800; font-size: 40px;
-    letter-spacing: 4px; line-height: 1;
-    margin-bottom: 12px;
-  }
-
-  .signal-box.buy .signal-main { color: var(--buy); text-shadow: 0 0 30px var(--buy); }
-  .signal-box.sell .signal-main { color: var(--sell); text-shadow: 0 0 30px var(--sell); }
-  .signal-box.wait .signal-main { color: var(--wait); text-shadow: 0 0 20px var(--wait); }
-  .signal-box.loading .signal-main { color: var(--text-muted); }
-
-  .signal-asset {
-    font-size: 11px; color: var(--text-secondary);
-    letter-spacing: 2px; margin-bottom: 16px;
-  }
-
-  /* CONFIDENCE */
-  .conf-row {
-    display: flex; align-items: center; justify-content: space-between;
-    margin-bottom: 6px;
-  }
-
-  .conf-label {
-    font-size: 10px; color: var(--text-secondary); letter-spacing: 1px;
-  }
-
-  .conf-pct {
-    font-size: 12px; font-weight: 700;
-  }
-
-  .conf-bar {
-    height: 6px; background: var(--bg-elevated);
-    border-radius: 3px; overflow: hidden; margin-bottom: 16px;
-  }
-
-  .conf-fill {
-    height: 100%; border-radius: 3px;
-    transition: width 0.6s cubic-bezier(0.4,0,0.2,1);
-  }
-
-  .signal-box.buy .conf-fill { background: linear-gradient(90deg, #00a854, var(--buy)); }
-  .signal-box.sell .conf-fill { background: linear-gradient(90deg, #cc0040, var(--sell)); }
-  .signal-box.wait .conf-fill { background: linear-gradient(90deg, #cc8800, var(--wait)); }
-  .signal-box.loading .conf-fill { background: var(--border-bright); }
-
-  /* TP/SL */
-  .tpsl-grid {
-    display: grid; grid-template-columns: 1fr 1fr;
-    gap: 8px; margin-bottom: 12px;
-  }
-
-  .tpsl-card {
-    background: var(--bg-void);
-    border-radius: 8px; padding: 10px 12px;
-    border: 1px solid var(--border);
-  }
-
-  .tpsl-lbl {
-    font-size: 9px; color: var(--text-muted);
-    letter-spacing: 1px; text-transform: uppercase;
-    margin-bottom: 4px;
-  }
-
-  .tpsl-val {
-    font-size: 13px; font-weight: 700;
-    font-family: 'Space Mono', monospace;
-  }
-
-  .tpsl-val.entry { color: var(--text-primary); }
-  .tpsl-val.tp { color: var(--buy); }
-  .tpsl-val.sl { color: var(--sell); }
-  .tpsl-val.rr { color: var(--accent); }
-
-  .tpsl-sub {
-    font-size: 9px; color: var(--text-muted); margin-top: 2px;
-  }
-
-  /* MTF ROW */
-  .mtf-section {
-    padding: 0 16px 12px;
-  }
-
-  .section-title {
-    font-size: 9px; color: var(--text-muted);
-    letter-spacing: 2px; text-transform: uppercase;
-    margin-bottom: 8px; padding-bottom: 6px;
-    border-bottom: 1px solid var(--border);
-  }
-
-  .mtf-row {
-    display: flex; gap: 6px;
-  }
-
-  .mtf-chip {
-    flex: 1; padding: 8px 6px;
-    border-radius: 6px; text-align: center;
-    border: 1px solid var(--border);
-    background: var(--bg-card);
-  }
-
-  .mtf-tf {
-    font-size: 9px; color: var(--text-muted);
-    letter-spacing: 1px; margin-bottom: 4px;
-  }
-
-  .mtf-sig {
-    font-size: 11px; font-weight: 700;
-  }
-
-  .mtf-chip.buy-chip { border-color: var(--buy-dim); background: var(--buy-glow); }
-  .mtf-chip.sell-chip { border-color: var(--sell-dim); background: var(--sell-glow); }
-  .mtf-chip.wait-chip { border-color: var(--wait-dim); background: var(--wait-glow); }
-
-  .mtf-chip.buy-chip .mtf-sig { color: var(--buy); }
-  .mtf-chip.sell-chip .mtf-sig { color: var(--sell); }
-  .mtf-chip.wait-chip .mtf-sig { color: var(--wait); }
-
-  /* CONFIRMATIONS */
-  .conf-checks {
-    padding: 0 16px 12px;
-  }
-
-  .check-item {
-    display: flex; align-items: center; gap: 8px;
-    padding: 5px 0; border-bottom: 1px solid var(--border);
-  }
-
-  .check-item:last-child { border-bottom: none; }
-
-  .check-icon {
-    width: 16px; height: 16px; border-radius: 50%;
-    display: flex; align-items: center; justify-content: center;
-    font-size: 9px; flex-shrink: 0;
-  }
-
-  .check-icon.pass { background: var(--buy-glow); color: var(--buy); border: 1px solid var(--buy-dim); }
-  .check-icon.fail { background: var(--sell-glow); color: var(--sell); border: 1px solid var(--sell-dim); }
-  .check-icon.warn { background: var(--wait-glow); color: var(--wait); border: 1px solid var(--wait-dim); }
-  .check-icon.pend { background: var(--bg-elevated); color: var(--text-muted); border: 1px solid var(--border); }
-
-  .check-name {
-    flex: 1; font-size: 10px; color: var(--text-secondary); letter-spacing: 0.5px;
-  }
-
-  .check-val {
-    font-size: 10px; font-family: 'Space Mono', monospace;
-    color: var(--text-secondary);
-  }
-
-  /* SIGNAL HISTORY */
-  .history-section {
-    padding: 0 16px 16px; flex: 1;
-  }
-
-  .history-list {
-    display: flex; flex-direction: column; gap: 6px;
-  }
-
-  .hist-item {
-    background: var(--bg-card);
-    border-radius: 8px; padding: 8px 12px;
-    border: 1px solid var(--border);
-    display: flex; align-items: center; gap: 10px;
-    transition: all 0.2s;
-  }
-
-  .hist-item:hover { border-color: var(--border-bright); }
-
-  .hist-badge {
-    padding: 3px 8px; border-radius: 4px;
-    font-size: 10px; font-weight: 700; letter-spacing: 1px;
-    flex-shrink: 0;
-  }
-
-  .hist-badge.buy { background: var(--buy-glow); color: var(--buy); border: 1px solid var(--buy-dim); }
-  .hist-badge.sell { background: var(--sell-glow); color: var(--sell); border: 1px solid var(--sell-dim); }
-  .hist-badge.wait { background: var(--wait-glow); color: var(--wait); border: 1px solid var(--wait-dim); }
-
-  .hist-info { flex: 1; min-width: 0; }
-
-  .hist-asset {
-    font-size: 10px; color: var(--text-secondary);
-    letter-spacing: 1px;
-  }
-
-  .hist-price {
-    font-size: 11px; font-weight: 700;
-    font-family: 'Space Mono', monospace;
-  }
-
-  .hist-time {
-    font-size: 9px; color: var(--text-muted); flex-shrink: 0;
-  }
-
-  .hist-conf {
-    font-size: 10px; color: var(--accent); flex-shrink: 0;
-  }
-
-  /* TOAST */
-  .toast-container {
-    position: fixed; bottom: 24px; right: 24px;
-    z-index: 9999; display: flex; flex-direction: column; gap: 8px;
-    pointer-events: none;
-  }
-
-  .toast {
-    padding: 12px 20px; border-radius: 10px;
-    font-size: 12px; font-weight: 700;
-    display: flex; align-items: center; gap: 10px;
-    animation: toast-in 0.3s ease, toast-out 0.3s ease 3.7s forwards;
-    pointer-events: all; min-width: 260px;
-  }
-
-  .toast.buy { background: #003020; border: 1px solid var(--buy-dim); color: var(--buy); }
-  .toast.sell { background: #200010; border: 1px solid var(--sell-dim); color: var(--sell); }
-  .toast.info { background: var(--bg-elevated); border: 1px solid var(--border-bright); color: var(--text-primary); }
-
-  @keyframes toast-in {
-    from { transform: translateX(120%); opacity: 0; }
-    to { transform: translateX(0); opacity: 1; }
-  }
-
-  @keyframes toast-out {
-    to { transform: translateX(120%); opacity: 0; }
-  }
-
-  /* STATUS BAR */
-  .status-bar {
-    position: fixed; bottom: 0; left: 0; right: 0;
-    height: 28px; background: var(--bg-panel);
-    border-top: 1px solid var(--border);
-    display: flex; align-items: center; gap: 20px;
-    padding: 0 16px; z-index: 50;
-  }
-
-  .status-item {
-    display: flex; align-items: center; gap: 6px;
-    font-size: 10px; color: var(--text-muted); letter-spacing: 0.5px;
-  }
-
-  .status-dot {
-    width: 5px; height: 5px; border-radius: 50%;
-  }
-
-  .status-dot.green { background: var(--buy); }
-  .status-dot.red { background: var(--sell); }
-  .status-dot.yellow { background: var(--wait); }
-
-  /* API KEY NOTICE */
-  .api-notice {
-    background: var(--bg-card);
-    border: 1px solid #2a2030;
-    border-radius: 8px; margin: 0 16px 12px;
-    padding: 10px 12px;
-  }
-
-  .api-notice p {
-    font-size: 9px; color: var(--text-muted); line-height: 1.7;
-  }
-
-  .api-notice .api-key-label {
-    font-size: 9px; color: var(--text-secondary); letter-spacing: 1px;
-    text-transform: uppercase; margin-bottom: 4px; margin-top: 8px;
-  }
-
-  .api-key-input {
-    width: 100%; background: var(--bg-void);
-    border: 1px solid var(--border); border-radius: 4px;
-    padding: 6px 10px; color: var(--text-primary);
-    font-family: 'Space Mono', monospace; font-size: 10px;
-    outline: none; transition: border-color 0.2s;
-  }
-
-  .api-key-input:focus { border-color: var(--accent); }
-
-  .api-key-btn {
-    margin-top: 6px; padding: 5px 12px;
-    background: var(--accent-dim); border: 1px solid var(--accent);
-    border-radius: 4px; color: var(--text-primary);
-    font-family: 'Space Mono', monospace; font-size: 10px;
-    cursor: pointer; transition: all 0.2s; width: 100%;
-  }
-
-  .api-key-btn:hover { background: var(--accent); }
-
-  /* RESPONSIVE */
-  @media (max-width: 900px) {
-    .main { grid-template-columns: 1fr; grid-template-rows: 60vh auto; height: auto; }
-    .left-panel { height: 60vh; }
-    .right-panel { height: auto; overflow-y: visible; }
-    .status-bar { display: none; }
-  }
-
-  @media (max-width: 600px) {
-    .ticker-bar { gap: 16px; }
-    .header { padding: 0 12px; }
-  }
-
-  /* GLOW ANIMATION */
-  @keyframes glow-pulse {
-    0%,100% { box-shadow: 0 0 20px var(--buy-glow); }
-    50% { box-shadow: 0 0 40px var(--buy-dim); }
-  }
-
-  .signal-box.buy { animation: glow-pulse-buy 3s ease-in-out infinite; }
-  .signal-box.sell { animation: glow-pulse-sell 3s ease-in-out infinite; }
-
-  @keyframes glow-pulse-buy {
-    0%,100% { box-shadow: 0 0 20px var(--buy-glow), inset 0 0 20px var(--buy-glow); }
-    50% { box-shadow: 0 0 40px var(--buy-dim), inset 0 0 30px var(--buy-glow); }
-  }
-
-  @keyframes glow-pulse-sell {
-    0%,100% { box-shadow: 0 0 20px var(--sell-glow), inset 0 0 20px var(--sell-glow); }
-    50% { box-shadow: 0 0 40px var(--sell-dim), inset 0 0 30px var(--sell-glow); }
-  }
-
-  .fade-in { animation: fadeIn 0.4s ease forwards; }
-  @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ProTrade | Institutional Trading Terminal</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Lightweight Charts by TradingView -->
+    <script src="https://unpkg.com/lightweight-charts@4.1.0/dist/lightweight-charts.standalone.production.js"></script>
+    
+    <!-- FontAwesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        mono: ['JetBrains Mono', 'monospace'],
+                    },
+                    colors: {
+                        trade: {
+                            bg: '#0b0e11',
+                            panel: '#151a21',
+                            border: '#2a2e39',
+                            buy: '#0ecb81',
+                            sell: '#f6465d',
+                            text: '#d1d4dc',
+                            accent: '#2962ff'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        body {
+            background-color: #0b0e11;
+            color: #d1d4dc;
+        }
+        .glass-panel {
+            background: rgba(21, 26, 33, 0.7);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(42, 46, 57, 0.5);
+        }
+        .signal-pulse {
+            animation: pulse-border 2s infinite;
+        }
+        @keyframes pulse-border {
+            0% { box-shadow: 0 0 0 0 rgba(41, 98, 255, 0.4); }
+            70% { box-shadow: 0 0 0 10px rgba(41, 98, 255, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(41, 98, 255, 0); }
+        }
+        .tv-chart {
+            width: 100%;
+            height: 100%;
+        }
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #0b0e11; 
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #2a2e39; 
+            border-radius: 3px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #374151; 
+        }
+    </style>
 </head>
-<body>
+<body class="h-screen flex flex-col overflow-hidden font-sans selection:bg-trade-accent selection:text-white">
 
-<!-- HEADER -->
-<header class="header">
-  <div class="logo">
-    <div class="logo-icon">AX</div>
-    <div class="logo-text">APEX SIGNALS</div>
-  </div>
-  <div class="header-right">
-    <div class="live-badge"><div class="live-dot"></div>LIVE</div>
-    <div class="market-time" id="marketTime">--:--:-- UTC</div>
-  </div>
-</header>
+    <!-- Header -->
+    <header class="h-16 border-b border-trade-border bg-trade-panel flex items-center justify-between px-6 z-20">
+        <div class="flex items-center gap-3">
+            <div class="w-8 h-8 bg-gradient-to-br from-blue-600 to-indigo-600 rounded flex items-center justify-center text-white font-bold">
+                <i class="fa-solid fa-chart-line"></i>
+            </div>
+            <h1 class="text-xl font-bold tracking-tight text-white">ProTrade <span class="text-trade-accent text-xs font-mono border border-trade-accent px-1 rounded ml-1">ALPHA</span></h1>
+        </div>
 
-<!-- TICKER -->
-<div class="ticker-bar">
-  <div class="ticker-item">
-    <span class="ticker-symbol">BTC/USD</span>
-    <span class="ticker-price" id="btcPrice" style="color:var(--buy)">Loading…</span>
-    <span class="ticker-change up" id="btcChange">—</span>
-  </div>
-  <div class="ticker-divider"></div>
-  <div class="ticker-item">
-    <span class="ticker-symbol">XAU/USD</span>
-    <span class="ticker-price" id="goldPrice" style="color:var(--gold)">Loading…</span>
-    <span class="ticker-change up" id="goldChange">—</span>
-  </div>
-  <div class="ticker-divider"></div>
-  <div class="ticker-item" style="gap:6px">
-    <span style="font-size:10px;color:var(--text-muted)">SIGNALS TODAY:</span>
-    <span id="signalCount" style="font-size:11px;font-weight:700;color:var(--accent)">0</span>
-  </div>
-  <div class="ticker-divider"></div>
-  <div class="ticker-item" style="gap:6px">
-    <span style="font-size:10px;color:var(--text-muted)">ACTIVE ASSET:</span>
-    <span id="activeAssetTicker" style="font-size:11px;font-weight:700;color:var(--text-primary)">BTC/USD</span>
-  </div>
-</div>
+        <div class="flex items-center gap-6">
+            <!-- Asset Selector -->
+            <div class="flex bg-trade-bg rounded-lg p-1 border border-trade-border">
+                <button onclick="app.setAsset('BTCUSDT')" id="btn-btc" class="px-4 py-1.5 rounded text-sm font-medium transition-all bg-trade-border text-white shadow-sm">BTC/USD</button>
+                <button onclick="app.setAsset('XAUUSD')" id="btn-xau" class="px-4 py-1.5 rounded text-sm font-medium transition-all text-gray-400 hover:text-white">XAU/USD</button>
+            </div>
 
-<!-- MAIN -->
-<div class="main">
+            <!-- Live Ticker -->
+            <div class="hidden md:flex flex-col items-end">
+                <div class="text-xs text-gray-400">Live Price</div>
+                <div id="header-price" class="font-mono font-bold text-lg text-white">--.--</div>
+            </div>
+            
+            <!-- Connection Status -->
+            <div class="flex items-center gap-2 px-3 py-1 rounded-full bg-trade-bg border border-trade-border">
+                <span class="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
+                <span class="text-xs font-medium text-gray-300">LIVE</span>
+            </div>
+        </div>
+    </header>
 
-  <!-- LEFT -->
-  <div class="left-panel">
+    <!-- Main Content -->
+    <main class="flex-1 flex overflow-hidden">
+        
+        <!-- Left: Chart & Analysis -->
+        <section class="flex-1 flex flex-col border-r border-trade-border min-w-0">
+            
+            <!-- Chart Toolbar -->
+            <div class="h-10 border-b border-trade-border flex items-center justify-between px-4 bg-trade-panel">
+                <div class="flex items-center gap-4 text-xs font-medium text-gray-400">
+                    <span class="flex items-center gap-1"><i class="fa-regular fa-clock"></i> <span id="timeframe-display">1H</span></span>
+                    <span class="w-px h-3 bg-gray-600"></span>
+                    <span class="text-trade-buy">Vol: <span id="vol-display">--</span></span>
+                    <span class="text-trade-accent">24h: <span id="change-display">--%</span></span>
+                </div>
+                <div class="flex gap-2">
+                    <button class="p-1.5 hover:bg-trade-border rounded text-gray-400 hover:text-white transition"><i class="fa-solid fa-layer-group"></i></button>
+                    <button class="p-1.5 hover:bg-trade-border rounded text-gray-400 hover:text-white transition"><i class="fa-solid fa-crosshairs"></i></button>
+                </div>
+            </div>
 
-    <!-- A
+            <!-- Chart Container -->
+            <div class="flex-1 relative bg-trade-bg" id="chart-container">
+                <div id="chart" class="absolute inset-0"></div>
+                
+                <!-- Loading Overlay -->
+                <div id="chart-loader" class="absolute inset-0 flex items-center justify-center bg-trade-bg z-10">
+                    <div class="flex flex-col items-center gap-3">
+                        <i class="fa-solid fa-circle-notch fa-spin text-3xl text-trade-accent"></i>
+                        <span class="text-sm text-gray-400">Initializing Market Data...</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Signal Strength / Confidence Meter -->
+            <div class="h-32 border-t border-trade-border bg-trade-panel p-4 grid grid-cols-3 gap-4">
+                <!-- Trend Meter -->
+                <div class="bg-trade-bg rounded border border-trade-border p-3 flex flex-col justify-between">
+                    <div class="flex justify-between items-center mb-1">
+                        <span class="text-xs text-gray-400 uppercase tracking-wider">Trend Strength</span>
+                        <i class="fa-solid fa-arrow-trend-up text-gray-500"></i>
+                    </div>
+                    <div class="w-full bg-gray-700 h-1.5 rounded-full overflow-hidden">
+                        <div id="meter-trend" class="bg-blue-500 h-full transition-all duration-500" style="width: 50%"></div>
+                    </div>
+                    <div class="flex justify-between text-xs font-mono mt-1">
+                        <span class="text-gray-500">WEAK</span>
+                        <span id="val-trend" class="text-white">50%</span>
+                        <span class="text-gray-500">STRONG</span>
+                    </div>
+                </div>
+
+                <!-- Momentum -->
+                <div class="bg-trade-bg rounded border border-trade-border p-3 flex flex-col justify-between">
+                    <div class="flex justify-between items-center mb-1">
+                        <span class="text-xs text-gray-400 uppercase tracking-wider">Momentum (RSI/MACD)</span>
+                        <i class="fa-solid fa-bolt text-gray-500"></i>
+                    </div>
+                    <div class="w-full bg-gray-700 h-1.5 rounded-full overflow-hidden">
+                        <div id="meter-momentum" class="bg-yellow-500 h-full transition-all duration-500" style="width: 50%"></div>
+                    </div>
+                    <div class="flex justify-between text-xs font-mono mt-1">
+                        <span class="text-gray-500">LOW</span>
+                        <span id="val-momentum" class="text-white">50%</span>
+                        <span class="text-gray-500">HIGH</span>
+                    </div>
+                </div>
+
+                <!-- Volatility -->
+                <div class="bg-trade-bg rounded border border-trade-border p-3 flex flex-col justify-between">
+                    <div class="flex justify-between items-center mb-1">
+                        <span class="text-xs text-gray-400 uppercase tracking-wider">Volatility (BB)</span>
+                        <i class="fa-solid fa-wave-square text-gray-500"></i>
+                    </div>
+                    <div class="w-full bg-gray-700 h-1.5 rounded-full overflow-hidden">
+                        <div id="meter-volatility" class="bg-purple-500 h-full transition-all duration-500" style="width: 50%"></div>
+                    </div>
+                    <div class="flex justify-between text-xs font-mono mt-1">
+                        <span class="text-gray-500">LOW</span>
+                        <span id="val-volatility" class="text-white">50%</span>
+                        <span class="text-gray-500">EXTREME</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Right: Dashboard & Signals -->
+        <aside class="w-96 bg-trade-panel flex flex-col overflow-y-auto">
+            
+            <!-- Main Signal Box -->
+            <div class="p-6 border-b border-trade-border">
+                <div class="flex justify-between items-start mb-4">
+                    <h2 class="text-sm font-bold text-gray-400 uppercase tracking-wider">Current Signal</h2>
+                    <span id="signal-badge" class="px-2 py-0.5 rounded text-[10px] font-bold bg-gray-700 text-gray-300">ANALYZING</span>
+                </div>
+                
+                <div id="signal-box" class="bg-trade-bg border border-trade-border rounded-lg p-6 text-center transition-all duration-300">
+                    <div id="signal-icon" class="text-4xl mb-2 text-gray-600"><i class="fa-solid fa-circle-notch fa-spin"></i></div>
+                    <h3 id="signal-text" class="text-2xl font-bold text-white mb-1">WAIT</h3>
+                    <p id="signal-desc" class="text-xs text-gray-500">Calculating indicators...</p>
+                </div>
+
+                <!-- Confidence Score -->
+                <div class="mt-4 flex items-center gap-3">
+                    <div class="text-xs text-gray-400">Confidence</div>
+                    <div class="flex-1 bg-gray-700 h-2 rounded-full overflow-hidden">
+                        <div id="confidence-bar" class="h-full bg-gray-500 w-0 transition-all duration-700"></div>
+                    </div>
+                    <div id="confidence-val" class="text-sm font-mono font-bold text-white">0%</div>
+                </div>
+            </div>
+
+            <!-- Trade Setup (TP/SL) -->
+            <div class="p-6 border-b border-trade-border bg-trade-bg/50">
+                <h2 class="text-sm font-bold text-gray-400 uppercase tracking-wider mb-4">Trade Setup</h2>
+                
+                <div class="space-y-3">
+                    <div class="flex justify-between items-center p-3 bg-trade-panel rounded border border-trade-border">
+                        <span class="text-xs text-gray-400">Entry Price</span>
+                        <span id="setup-entry" class="font-mono font-bold text-white">--.--</span>
+                    </div>
+                    
+                    <div class="grid grid-cols-2 gap-3">
+                        <div class="flex flex-col p-3 bg-trade-panel rounded border border-trade-border border-l-4 border-l-trade-buy">
+                            <span class="text-[10px] text-gray-400 uppercase">Take Profit</span>
+                            <span id="setup-tp" class="font-mono font-bold text-trade-buy">--.--</span>
+                            <span id="setup-tp-pips" class="text-[10px] text-gray-500">+0 pips</span>
+                        </div>
+                        <div class="flex flex-col p-3 bg-trade-panel rounded border border-trade-border border-l-4 border-l-trade-sell">
+                            <span class="text-[10px] text-gray-400 uppercase">Stop Loss</span>
+                            <span id="setup-sl" class="font-mono font-bold text-trade-sell">--.--</span>
+                            <span id="setup-sl-pips" class="text-[10px] text-gray-500">-0 pips</span>
+                        </div>
+                    </div>
+
+                    <div class="flex justify-between items-center pt-2">
+                        <span class="text-xs text-gray-400">Risk/Reward Ratio</span>
+                        <span id="setup-rr" class="text-sm font-bold text-white">--</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Indicator Status -->
+            <div class="p-6 border-b border-trade-border">
+                <h2 class="text-sm font-bold text-gray-400 uppercase tracking-wider mb-4">Indicator Status</h2>
+                <div class="space-y-2 text-sm">
+                    <div class="flex justify-between items-center">
+                        <span class="text-gray-400">EMA (50/200)</span>
+                        <span id="ind-ema" class="font-mono text-xs text-gray-600">--</span>
+                    </div>
+                    <div class="flex justify-between items-center">
+                        <span class="text-gray-400">RSI (14)</span>
+                        <span id="ind-rsi" class="font-mono text-xs text-gray-600">--</span>
+                    </div>
+                    <div class="flex justify-between items-center">
+                        <span class="text-gray-400">MACD</span>
+                        <span id="ind-macd" class="font-mono text-xs text-gray-600">--</span>
+                    </div>
+                    <div class="flex justify-between items-center">
+                        <span class="text-gray-400">Bollinger Bands</span>
+                        <span id="ind-bb" class="font-mono text-xs text-gray-600">--</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Signal History -->
+            <div class="flex-1 p-0 overflow-hidden flex flex-col">
+                <h2 class="text-sm font-bold text-gray-400 uppercase tracking-wider p-6 pb-2">Signal History</h2>
+                <div class="overflow-y-auto flex-1 px-6 pb-6 space-y-2" id="signal-history">
+                    <!-- History items injected here -->
+                    <div class="text-center text-xs text-gray-600 mt-10">Waiting for signals...</div>
+                </div>
+            </div>
+
+        </aside>
+    </main>
+
+    <!-- Notification Toast -->
+    <div id="toast" class="fixed bottom-6 right-6 transform translate-y-20 opacity-0 transition-all duration-300 z-50">
+        <div class="glass-panel px-4 py-3 rounded-lg shadow-2xl border-l-4 border-trade-accent flex items-center gap-3">
+            <div class="bg-trade-accent/20 p-2 rounded-full text-trade-accent">
+                <i class="fa-solid fa-bell"></i>
+            </div>
+            <div>
+                <h4 class="text-sm font-bold text-white">New Signal Generated</h4>
+                <p id="toast-msg" class="text-xs text-gray-400">Check the dashboard for details.</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- 1. TECHNICAL INDICATOR LIBRARY ---
+        class Indicators {
+            static calculateSMA(data, period) {
+                if (data.length < period) return null;
+                let sum = 0;
+                for (let i = data.length - period; i < data.length; i++) {
+                    sum += data[i].close;
+                }
+                return sum / period;
+            }
+
+            static calculateEMA(data, period) {
+                if (data.length < period) return null;
+                const k = 2 / (period + 1);
+                let ema = Indicators.calculateSMA(data.slice(0, period), period);
+                for (let i = period; i < data.length; i++) {
+                    ema = data[i].close * k + ema * (1 - k);
+                }
+                return ema;
+            }
+
+            static calculateRSI(data, period = 14) {
+                if (data.length < period + 1) return null;
+                let gains = 0, losses = 0;
+                for (let i = data.length - period - 1; i < data.length - 1; i++) {
+                    const diff = data[i + 1].close - data[i].close;
+                    if (diff > 0) gains += diff;
+                    else losses += Math.abs(diff);
+                }
+                let avgGain = gains / period;
+                let avgLoss = losses / period;
+                if (avgLoss === 0) return 100;
+                const rs = avgGain / avgLoss;
+                return 100 - (100 / (1 + rs));
+            }
+
+            static calculateMACD(data, fast = 12, slow = 26, signal = 9) {
+                // Simplified MACD using EMAs
+                const ema12 = Indicators.calculateEMA(data, fast);
+                const ema26 = Indicators.calculateEMA(data, slow);
+                if (!ema12 || !ema26) return null;
+                const macdLine = ema12 - ema26;
+                // Signal line is EMA of MACD line (approximated here for single value)
+                // For full history, we'd need arrays. This returns current state.
+                return { macd: macdLine, signal: macdLine * 0.9 }; // Placeholder for signal crossover logic
+            }
+
+            static calculateBollingerBands(data, period = 20, stdDev = 2) {
+                if (data.length < period) return null;
+                const slice = data.slice(-period);
+                const mean = slice.reduce((acc, val) => acc + val.close, 0) / period;
+                const squaredDiffs = slice.map(val => Math.pow(val.close - mean, 2));
+                const variance = squaredDiffs.reduce((acc, val) => acc + val, 0) / period;
+                const std = Math.sqrt(variance);
+                return {
+                    upper: mean + (stdDev * std),
+                    middle: mean,
+                    lower: mean - (stdDev * std)
+                };
+            }
+        }
+
+        // --- 2. SIGNAL ENGINE ---
+        class SignalEngine {
+            constructor() {
+                this.history = [];
+                this.lastSignal = null;
+            }
+
+            analyze(data) {
+                if (data.length < 50) return { signal: 'WAIT', confidence: 0, reason: 'Insufficient Data' };
+
+                const current = data[data.length - 1];
+                const ema50 = Indicators.calculateEMA(data, 50);
+                const ema200 = Indicators.calculateEMA(data, 200);
+                const rsi = Indicators.calculateRSI(data, 14);
+                const macd = Indicators.calculateMACD(data);
+                const bb = Indicators.calculateBollingerBands(data, 20);
+
+                // Trend Score (0-100)
+                let trendScore = 50;
+                if (ema50 > ema200) trendScore += 25; // Golden cross area
+                if (current.close > ema50) trendScore += 15;
+                if (current.close > ema200) trendScore += 10;
+
+                // Momentum Score
+                let momScore = 50;
+                if (rsi > 45 && rsi < 65) momScore += 20; // Healthy zone
+                if (macd && macd.macd > macd.signal) momScore += 20; // Bullish crossover
+                else if (macd) momScore -= 20;
+
+               
